@@ -65,7 +65,7 @@ const PinMap PinMap_ENCODER[] = {
     {PC_7, ENCODER_8,  STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_NOPULL, GPIO_AF3_TIM8, 2, 0)}, // TIM8_CH2 17
 };
 
-const ENCODERChannels_t encoderPins[] = {
+const ENCODERChannels_t encoderChannels[] = {
     {0,1}, /*TIMER1*/
     {2,3}, /*TIMER2*/
     {4,5}, {4,7}, {4,9}, {6, 5}, {6,7}, {6,9}, {8,5}, {8,7}, {8,9}, /*TIMER3 have a lot of possibilities*/

@@ -29,6 +29,8 @@
 #include "mbed.h"
 #include "channels_pair.h"
 
+typedef void *encoderID_t;
+
 typedef enum {
 	UNLOCK,
 	LOCK,
@@ -39,11 +41,12 @@ typedef enum {
 
 typedef struct {
 	TIM_TypeDef* timer;
-	uint8_t id;
+	encoderID_t id;
 	uint16_t value;
 	uint8_t encoderSTATE;
 	uint8_t buttonLock;
 	uint8_t buttonState;
+    uint8_t buttonMode;
     uint32_t buttonTime;
 } encoder_t;
 
@@ -55,7 +58,6 @@ private:
 	DigitalIn _button;
 	encoder_t encoder;
 
-	void begin(uint8_t timer);
 	void write(uint16_t value);
 	uint16_t read();
 	uint8_t overflow();
@@ -68,9 +70,9 @@ public:
 	/* Once a variable read they are attached to encoder
 	 * To release the encoder to be attached to another variable
 	 * is necessary use the method   void detached(void) */
-	encoderState_t read(uint8_t *val, uint8_t min, uint8_t max, uint8_t id);
-	encoderState_t read(uint16_t *val, uint16_t min, uint16_t max, uint8_t id);
-	encoderState_t read(float *val, float max, uint8_t id);
+	encoderState_t read(uint8_t *val, uint8_t min, uint8_t max, encoderID_t id);
+	encoderState_t read(uint16_t *val, uint16_t min, uint16_t max, encoderID_t id);
+	encoderState_t read(float *val, float max, encoderID_t id);
 	void detached();
 
 	/* Once read the button will do only one action until be released
@@ -79,6 +81,7 @@ public:
 	uint8_t button(uint32_t debounce);
 	/* Read the button pin directly without any other software interferences */
 	uint8_t button();
+    osThreadId_t the;
 
 };
 

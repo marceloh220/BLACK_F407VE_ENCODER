@@ -29,14 +29,18 @@ static void encoderTIMER_Init(uint32_t timer);
 /*---Constructor---*/
 Encoder::Encoder(ENCODERName_t encoderName, PinName button, PinMode buttonMode): _button(button, buttonMode)
 {
-    ENCODERChannels_t encoderChannels = encoderPins[encoderName];
-    PinMap channel1 = PinMap_ENCODER[encoderChannels.channel1];
-    PinMap channel2 = PinMap_ENCODER[encoderChannels.channel2];
+    ENCODERChannels_t channels = encoderChannels[encoderName];
+    PinMap channel1 = PinMap_ENCODER[channels.channel1];
+    PinMap channel2 = PinMap_ENCODER[channels.channel2];
 	encoder.timer =  (TIM_TypeDef*)channel1.peripheral;
+
     // Enable TIM clock
     encoderTIMER_Init(channel1.peripheral);
     pin_function(channel1.pin, channel1.function);
     pin_function(channel2.pin, channel2.function);
+    encoder.buttonMode = buttonMode;
+    encoder.buttonTime = HAL_GetTick();
+    encoder.buttonState = LOCK;
 }
 
 /*-----Privates------*/
@@ -61,7 +65,7 @@ uint32_t Encoder::buttonTime()
 }
 
 /*---Read methods---*/
-encoderState_t Encoder::read(uint8_t *value, uint8_t min, uint8_t max, uint8_t id)
+encoderState_t Encoder::read(uint8_t *value, uint8_t min, uint8_t max, encoderID_t id)
 {
 	uint8_t temp;
 	if(this->encoder.encoderSTATE == UNLOCK)
@@ -99,7 +103,7 @@ encoderState_t Encoder::read(uint8_t *value, uint8_t min, uint8_t max, uint8_t i
 	return NOACTION;
 }
 
-encoderState_t Encoder::read(uint16_t *value, uint16_t min, uint16_t max, uint8_t id)
+encoderState_t Encoder::read(uint16_t *value, uint16_t min, uint16_t max, encoderID_t id)
 {
 	uint16_t temp;
 	if (this->encoder.encoderSTATE == UNLOCK)
@@ -137,7 +141,7 @@ encoderState_t Encoder::read(uint16_t *value, uint16_t min, uint16_t max, uint8_
 	return NOACTION;
 }
 
-encoderState_t Encoder::read(float *value, float max, uint8_t id)
+encoderState_t Encoder::read(float *value, float max, encoderID_t id)
 {
 	volatile float ant;
 	volatile int16_t decimal;
@@ -212,15 +216,16 @@ void Encoder::detached()
 
 uint8_t Encoder::button(uint32_t debounce)
 {
+    uint8_t state = encoder.buttonMode == PullDown ? _button : !_button;
 	if (encoder.buttonLock == UNLOCK)
 	{
-		if(_button) {
+		if(state) {
 			encoder.buttonTime = HAL_GetTick();
 			encoder.buttonLock = LOCK;
 			return 1;
 		}
 	}
-	else if(buttonTime() > debounce && !_button) {
+	else if(buttonTime() > debounce && !state) {
 		encoder.buttonLock = 0;
 	}
 	return 0;
