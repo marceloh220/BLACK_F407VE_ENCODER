@@ -1,59 +1,42 @@
-/*
-MIT License
+/**  
+* @file encoder.cpp 
+* @brief Hardware encoder to STM32F407VE.
+*  
+* @author Marcelo H Moraes 
+* 
+* @date 09/18/2021
+* Copyright (c) 2021, Marcelo H Moraes
+* SPDX-License-Identifier: Apache-2.0
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+*
+* You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+* either express or implied.
+*
+* See the License for the specific language governing permissions and limitations under the License.
+*/
 
-Copyright (c) 2019 Marcelo Henrique Moraes
+#include "encoder.h"
+#include "encoder_mapping.cpp"
+#include <cstdint>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
-
-#include <encoder.h>
-#include <timer.h>
-#include <gpio.h>
-
-static uint32_t ENCODER_BUTTON_TIME = 0;
-
-#define ENCODER_BUTTON_INPUT	(*encoder.button)
-
-/*---Common functions---*/
-#ifdef STM32F103xB
-void encoderGPIO_Init(gpioPIN_t channel1, gpioPIN_t channel2, gpioPIN_t button);
-#endif
-#if defined STM32F722xx || defined STM32F407xx
-void encoderGPIO_Init(gpioPIN_t channel1, gpioPIN_t channel2, gpioPIN_t button, alternative_t af);
-#endif
-static void encoderTIMER_Init(timerHW_t timer);
+static void encoderTIMER_Init(uint32_t timer);
 
 /*---Constructor---*/
-Encoder::Encoder(timerHW_t timer, gpioPIN_t button)
+Encoder::Encoder(ENCODERName_t encoderName, PinName button, PinMode buttonMode): _button(button, buttonMode)
 {
-	if(timerFunction(timer) & ENCODER) {
-		encoder.timer =  timerAddr(timer);
-		encoder.button = button;
-		timerEnable(timer);
-#ifdef STM32F103xB
-		encoderGPIO_Init(timerChannel1(timer), timerChannel2(timer), encoder.button);
-#endif
-#if defined STM32F722xx || defined STM32F407xx
-	encoderGPIO_Init(timerChannel1(timer), timerChannel2(timer), encoder.button, timerAF(timer));
-#endif
-		encoderTIMER_Init(timer);
-	}
+    ENCODERChannels_t encoderChannels = encoderPins[encoderName];
+    PinMap channel1 = PinMap_ENCODER[encoderChannels.channel1];
+    PinMap channel2 = PinMap_ENCODER[encoderChannels.channel2];
+	encoder.timer =  (TIM_TypeDef*)channel1.peripheral;
+    // Enable TIM clock
+    encoderTIMER_Init(channel1.peripheral);
+    pin_function(channel1.pin, channel1.function);
+    pin_function(channel2.pin, channel2.function);
 }
 
 /*-----Privates------*/
@@ -74,7 +57,7 @@ uint8_t Encoder::overflow()
 
 uint32_t Encoder::buttonTime()
 {
-	return HAL_GetTick() - ENCODER_BUTTON_TIME;
+	return HAL_GetTick() - encoder.buttonTime;
 }
 
 /*---Read methods---*/
@@ -231,41 +214,124 @@ uint8_t Encoder::button(uint32_t debounce)
 {
 	if (encoder.buttonLock == UNLOCK)
 	{
-		if(gpio.read(encoder.button)) {
-			ENCODER_BUTTON_TIME = HAL_GetTick();
+		if(_button) {
+			encoder.buttonTime = HAL_GetTick();
 			encoder.buttonLock = LOCK;
 			return 1;
 		}
 	}
-	else if(buttonTime() > debounce && !gpio.read(encoder.button)) {
+	else if(buttonTime() > debounce && !_button) {
 		encoder.buttonLock = 0;
 	}
 	return 0;
 }
 
-uint8_t Encoder::buttonPin() {
-	return gpio.read(encoder.button);
+uint8_t Encoder::button() {
+	return _button;
 }
 
-#ifdef STM32F103xB
-void encoderGPIO_Init(gpioPIN_t channel1, gpioPIN_t channel2, gpioPIN_t button_encoder) {
+void encoderTIMER_Init(uint32_t timer) {
+#if defined(TIM1_BASE)
+    if (timer == ENCODER_1) {
+        __HAL_RCC_TIM1_CLK_ENABLE();
+    }
 #endif
-#if defined STM32F722xx || defined STM32F407xx
-void encoderGPIO_Init(gpioPIN_t channel1, gpioPIN_t channel2, gpioPIN_t button_encoder, alternative_t af) {
+#if defined(TIM2_BASE)
+    else if (timer == ENCODER_2) {
+        __HAL_RCC_TIM2_CLK_ENABLE();
+    }
 #endif
-	gpio.mode(button_encoder, INPUT_PULLUP);
-#ifdef STM32F103xB
-	gpio.mode(channel1, INPUT_PULLUP);
-	gpio.mode(channel2, INPUT_PULLUP);
+#if defined(TIM3_BASE)
+    else if (timer == ENCODER_3) {
+        __HAL_RCC_TIM3_CLK_ENABLE();
+    }
 #endif
-#if defined STM32F722xx || defined STM32F407xx
-	gpio.mode(channel1, ALTERNATIVE_PULLUP, GPIO_FAST, af);
-	gpio.mode(channel2, ALTERNATIVE_PULLUP, GPIO_FAST, af);
+#if defined(TIM4_BASE)
+    else if (timer == ENCODER_4) {
+        __HAL_RCC_TIM4_CLK_ENABLE();
+    }
 #endif
-}
-
-void encoderTIMER_Init(timerHW_t timer) {
-	TIM_TypeDef* htimer = timerAddr(timer);
+#if defined(TIM5_BASE)
+    else if (timer == ENCODER_5) {
+        __HAL_RCC_TIM5_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM8_BASE)
+    else if (timer == ENCODER_8) {
+        __HAL_RCC_TIM8_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM9_BASE)
+    else if (timer == ENCODER_9) {
+        __HAL_RCC_TIM9_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM10_BASE)
+    else if (timer == ENCODER_10) {
+        __HAL_RCC_TIM10_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM11_BASE)
+    else if (timer == ENCODER_11) {
+        __HAL_RCC_TIM11_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM12_BASE)
+    else if (timer == ENCODER_12) {
+        __HAL_RCC_TIM12_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM13_BASE)
+    else if (timer == ENCODER_13) {
+        __HAL_RCC_TIM13_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM14_BASE)
+    else if (timer == ENCODER_14) {
+        __HAL_RCC_TIM14_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM15_BASE)
+    else if (timer == ENCODER_15) {
+        __HAL_RCC_TIM15_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM16_BASE)
+    else if (timer == ENCODER_16) {
+        __HAL_RCC_TIM16_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM17_BASE)
+    else if (timer == ENCODER_17) {
+        __HAL_RCC_TIM17_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM18_BASE)
+    else if (timer == ENCODER_18) {
+        __HAL_RCC_TIM18_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM19_BASE)
+    else if (timer == ENCODER_19) {
+        __HAL_RCC_TIM19_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM20_BASE)
+    else if (timer == ENCODER_20) {
+        __HAL_RCC_TIM20_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM21_BASE)
+    else if (timer == ENCODER_21) {
+        __HAL_RCC_TIM21_CLK_ENABLE();
+    }
+#endif
+#if defined(TIM22_BASE)
+    else if (timer == ENCODER_22) {
+        __HAL_RCC_TIM22_CLK_ENABLE();
+    }
+#endif
+	TIM_TypeDef* htimer = (TIM_TypeDef*)timer;
 	htimer->ARR = 0xFFFFFFFF;
 	htimer->CCMR1 |= (TIM_CCMR1_CC1S_0|TIM_CCMR1_CC2S_0|
 			(0xF<<TIM_CCMR1_IC1F_Pos)|(0xF<<TIM_CCMR1_IC2F_Pos));

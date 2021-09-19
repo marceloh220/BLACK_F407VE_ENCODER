@@ -1,43 +1,32 @@
-/*
-MIT License
+/**  
+* @file encoder.h  
+* @brief Hardware encoder to STM32F407VE.
+*  
+* @author Marcelo H Moraes 
+* 
+* @date 09/18/2021
+* Copyright (c) 2021, Marcelo H Moraes
+* SPDX-License-Identifier: Apache-2.0
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+*
+* You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+* either express or implied.
+*
+* See the License for the specific language governing permissions and limitations under the License.
+*/
 
-Copyright (c) 2019 Marcelo Henrique Moraes
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
 #ifndef _ENCODER_H_
 #define _ENCODER_H_
 
+#include <cstdint>
 #include <stdint.h>
 
-#include <gpio.h>
-#include <utils.h>
-
-#ifdef STM32F103xE
-#include "stm32f1xx.h"
-#endif
-#ifdef STM32F407xx
-#include "stm32f4xx_hal_tim.h"
-#endif
-#ifdef STM32F722xx
-#include "stm32f7xx_hal_tim.h"
-#endif
+#include "mbed.h"
 
 typedef enum {
 	UNLOCK,
@@ -52,16 +41,43 @@ typedef struct {
 	uint8_t id;
 	uint16_t value;
 	uint8_t encoderSTATE;
-	gpioPIN_t button;
 	uint8_t buttonLock;
 	uint8_t buttonState;
+    uint32_t buttonTime;
 } encoder_t;
+
+typedef enum {
+    ENCODER_PA8_PA9,     /*TIMER1*/
+
+    ENCODER_PA0_PA1,     /*TIMER2*/
+    
+    ENCODER_PA6_PA7,     /*TIMER3*/
+    ENCODER_PA6_PB5,     /*TIMER3*/
+    ENCODER_PA6_PC7,     /*TIMER3*/
+    ENCODER_PB4_PA7,     /*TIMER3*/
+    ENCODER_PB4_PB5,     /*TIMER3*/
+    ENCODER_PB4_PC7,     /*TIMER3*/
+    ENCODER_PC6_PA7,     /*TIMER3*/
+    ENCODER_PC6_PB5,     /*TIMER3*/
+    ENCODER_PC6_PC7,     /*TIMER3*/
+    
+    ENCODER_PB6_PB7,     /*TIMER4*/
+    ENCODER_PB6_PD13,    /*TIMER4*/
+    ENCODER_PD12_PB7,    /*TIMER4*/
+    ENCODER_PD12_PD13,   /*TIMER4*/
+
+//  ENCODER_PA0_PA1_ALT, /*TIMER5*/
+
+    ENCODER_PC6_PC7_ALT, /*TIMER8*/
+
+} ENCODERName_t;
 
 class Encoder
 {
 
 private:
 
+	DigitalIn _button;
 	encoder_t encoder;
 
 	void begin(uint8_t timer);
@@ -72,7 +88,7 @@ private:
 
 public:
 
-	Encoder(timerHW_t timer, gpioPIN_t pin);
+	Encoder(ENCODERName_t encoderName, PinName button, PinMode buttonMode = PullUp);
 
 	/* Once a variable read they are attached to encoder
 	 * To release the encoder to be attached to another variable
@@ -87,7 +103,7 @@ public:
 	 * Using the systick timer to avoid dead time in cpu */
 	uint8_t button(uint32_t debounce);
 	/* Read the button pin directly without any other software interferences */
-	uint8_t buttonPin();
+	uint8_t button();
 
 };
 
