@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 #include "mbed.h"
+#include "channels_pair.h"
 
 typedef enum {
 	UNLOCK,
@@ -45,32 +46,6 @@ typedef struct {
 	uint8_t buttonState;
     uint32_t buttonTime;
 } encoder_t;
-
-typedef enum {
-    ENCODER_PA8_PA9,     /*TIMER1*/
-
-    ENCODER_PA0_PA1,     /*TIMER2*/
-    
-    ENCODER_PA6_PA7,     /*TIMER3*/
-    ENCODER_PA6_PB5,     /*TIMER3*/
-    ENCODER_PA6_PC7,     /*TIMER3*/
-    ENCODER_PB4_PA7,     /*TIMER3*/
-    ENCODER_PB4_PB5,     /*TIMER3*/
-    ENCODER_PB4_PC7,     /*TIMER3*/
-    ENCODER_PC6_PA7,     /*TIMER3*/
-    ENCODER_PC6_PB5,     /*TIMER3*/
-    ENCODER_PC6_PC7,     /*TIMER3*/
-    
-    ENCODER_PB6_PB7,     /*TIMER4*/
-    ENCODER_PB6_PD13,    /*TIMER4*/
-    ENCODER_PD12_PB7,    /*TIMER4*/
-    ENCODER_PD12_PD13,   /*TIMER4*/
-
-//  ENCODER_PA0_PA1_ALT, /*TIMER5*/
-
-    ENCODER_PC6_PC7_ALT, /*TIMER8*/
-
-} ENCODERName_t;
 
 class Encoder
 {

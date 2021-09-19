@@ -68,7 +68,7 @@ const PinMap PinMap_ENCODER[] = {
 const ENCODERChannels_t encoderPins[] = {
     {0,1}, /*TIMER1*/
     {2,3}, /*TIMER2*/
-    {4,5}, {4,7}, {4,9}, {6, 5}, {6,7}, {6,9}, {8,5}, {8,7}, {8,9}, /*TIMER3*/
+    {4,5}, {4,7}, {4,9}, {6, 5}, {6,7}, {6,9}, {8,5}, {8,7}, {8,9}, /*TIMER3 have a lot of possibilities*/
     {10,11}, {10,13}, {12,11}, {12,13}, /*TIMER4*/
 //  {14,15}, /*TIMER5*/
     {16,17}, /*TIMER8*/
