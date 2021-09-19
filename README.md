@@ -34,3 +34,4 @@
  
  The [EXAMPLE](https://github.com/marceloh220/BLACK_F407VE_ENCODER/blob/main/example/main.cpp) uses the [ILI9341](https://github.com/marceloh220/F407VE_Display_ILI9341_FSMC) library
  
+ **The inputs of encoder are configurad in encoder mapping as __GPIO_NOPULL__, will be necessary external pull resistor or change the configuration to __GPIO_PULLUP__ or __GPIO_PULLDOWN__**
