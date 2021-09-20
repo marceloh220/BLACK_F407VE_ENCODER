@@ -27,7 +27,7 @@ int main() {
     uint8_t menuIndex = 0, menuIndexOld = 0;
     
     while (1) {
-        if(encoder.button(100)) {
+        if(encoder.button(30)) {
             encoder.detached();
             menuIndex = (++menuIndex)&0x3;
             /*menuIndex++;
