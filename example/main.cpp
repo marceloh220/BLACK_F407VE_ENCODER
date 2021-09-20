@@ -3,6 +3,7 @@
 #include "encoder.h"
 
 ILI9341 display;
+Encoder encoder(ENCODER_PB6_PB7, PB_8);
 
 typedef void (*funcPTR_t)(void);
 
@@ -12,8 +13,6 @@ void var2Handle();
 void brightHandle();
 
 funcPTR_t menu[] = {&var0Handle, &var1Handle, &var2Handle, &brightHandle};
-
-Encoder encoder(ENCODER_PB6_PB7, PB_8);
 
 int main() {
 
