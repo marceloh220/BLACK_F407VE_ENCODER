@@ -23,14 +23,21 @@
 #ifndef _ENCODER_H_
 #define _ENCODER_H_
 
+#include <chrono>
 #include <cstdint>
 #include <stdint.h>
 
 #include "mbed.h"
 #include "channels_pair.h"
 
+/**
+    @brief Encoder ID to attach a variable at timer's encoder
+*/
 typedef void *encoderID_t;
 
+/**
+    @brief Encoder states 
+*/
 typedef enum {
 	UNLOCK,
 	LOCK,
@@ -39,14 +46,17 @@ typedef enum {
 	LOCK_OTHER_ID,
 } encoderState_t;
 
+/**
+    @brief Encoder struct with encoder proprieties and states
+*/
 typedef struct {
 	TIM_TypeDef* timer;
 	encoderID_t id;
 	uint16_t value;
-	uint8_t encoderSTATE;
-	uint8_t buttonLock;
-	uint8_t buttonState;
-    uint8_t buttonMode;
+	encoderState_t encoderSTATE;
+	encoderState_t buttonLock;
+	encoderState_t buttonState;
+    PinMode buttonMode;
     uint32_t buttonTime;
 } encoder_t;
 
@@ -65,15 +75,31 @@ private:
 
 public:
 
-	Encoder(ENCODERName_t encoderName, PinName button, PinMode buttonMode = PullUp);
+    /**
+     *   @brief Create a Encoder object
+     *
+     *   @param channelpair  Pair to be used by Encoder
+     *   @param button       Pin to be used by the button in incoder
+     *   @param buttonMode   Button pull mode
+    */
+	Encoder(encoderChannelPair_t channelpair, PinName button = NC, PinMode buttonMode = PullUp);
 
 	/* Once a variable read they are attached to encoder
 	 * To release the encoder to be attached to another variable
-	 * is necessary use the method   void detached(void) */
+	 * is necessary use the method   void detach(void) */
+
+    /**
+     *   @brief Atacch and read a variable
+     *
+     *   @param val  Pointer to variable
+     *   @param min  Minimun value to variable
+     *   @param max  Maximun value to variable
+     *   @param id   ID to variable attach
+    */
 	encoderState_t read(uint8_t *val, uint8_t min, uint8_t max, encoderID_t id);
 	encoderState_t read(uint16_t *val, uint16_t min, uint16_t max, encoderID_t id);
 	encoderState_t read(float *val, float max, encoderID_t id);
-	void detached();
+	void detach();
 
 	/* Once read the button will do only one action until be released
 	 * This method have software debounce without delay loops
@@ -81,7 +107,6 @@ public:
 	uint8_t button(uint32_t debounce);
 	/* Read the button pin directly without any other software interferences */
 	uint8_t button();
-    osThreadId_t the;
 
 };
 

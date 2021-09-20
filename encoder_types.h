@@ -31,7 +31,7 @@
 typedef struct {
     uint8_t channel1;
     uint8_t channel2;
-} ENCODERChannels_t;
+} encoderChannels_t;
 
 typedef enum {
     ENCODER_1  = (int)TIM1_BASE,
@@ -92,6 +92,6 @@ typedef enum {
 #if defined TIM22_BASE
     ENCODER_22 = (int)TIM22_BASE
 #endif
-} ENCODERHw_t;
+} encoderHW_t;
 
 #endif

@@ -27,9 +27,9 @@
 static void encoderTIMER_Init(uint32_t timer);
 
 /*---Constructor---*/
-Encoder::Encoder(ENCODERName_t encoderName, PinName button, PinMode buttonMode): _button(button, buttonMode)
+Encoder::Encoder(encoderChannelPair_t channelpair, PinName button, PinMode buttonMode): _button(button, buttonMode)
 {
-    ENCODERChannels_t channels = encoderChannels[encoderName];
+    encoderChannels_t channels = encoderChannels[channelpair];
     PinMap channel1 = PinMap_ENCODER[channels.channel1];
     PinMap channel2 = PinMap_ENCODER[channels.channel2];
 	encoder.timer =  (TIM_TypeDef*)channel1.peripheral;
@@ -56,7 +56,7 @@ inline uint16_t Encoder::read()
 
 uint8_t Encoder::overflow()
 {
-	return (encoder.timer->CNT > (uint16_t)65000U) ? 1 : 0;
+	return (encoder.timer->CNT > (uint16_t)0xFFF0) ? 1 : 0;
 }
 
 uint32_t Encoder::buttonTime()
@@ -206,7 +206,7 @@ encoderState_t Encoder::read(float *value, float max, encoderID_t id)
 
 
 /*---Release encoder from a variable---*/
-void Encoder::detached()
+void Encoder::detach()
 {
 	encoder.timer->CNT = 0;
 	encoder.timer->ARR = 0xFFFF;
@@ -226,7 +226,7 @@ uint8_t Encoder::button(uint32_t debounce)
 		}
 	}
 	else if(buttonTime() > debounce && !state) {
-		encoder.buttonLock = 0;
+		encoder.buttonLock = UNLOCK;
 	}
 	return 0;
 }

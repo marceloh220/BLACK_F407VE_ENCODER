@@ -45,7 +45,7 @@ typedef enum {
 
     ENCODER_PC6_PC7_ALT, /*TIMER8*/
 
-} ENCODERName_t;
+} encoderChannelPair_t;
 
 #ifndef _CHALLELS_PAIR_H_
 #define _CHALLELS_PAIR_H_
